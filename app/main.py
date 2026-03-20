@@ -28,7 +28,7 @@ def GetAllNotifications(user_id: int, db: Session = Depends(get_db)):
     """
         Get a list of all user notifications
     """
-    return db.query(models.Notification).filter(models.Notification.user_id == user_id)
+    return db.query(models.Notification).filter(models.Notification.user_id == user_id).all()
 
 @app.get("/notifications/{notification_id}", response_model=schemas.Notification)
 def GetNotification(notification_id: int, db: Session = Depends(get_db)):
