@@ -4,6 +4,7 @@ import aio_pika
 from app.models import Notification
 from app.database import SessionLocal
 from email_notification import send_email
+from config import settings
 
 async def process_message(message: aio_pika.IncomingMessage):
     '''
@@ -51,8 +52,12 @@ async def process_message(message: aio_pika.IncomingMessage):
 
 
 async def main():
-    
-    connection = await aio_pika.connect_robust("amqp://guest:guest@localhost/")  # соединение с RabbitMQ
+    amqp_url = (
+        f"amqp://{settings.RABBITMQ_USER}:"
+        f"{settings.RABBITMQ_PASSWORD}@"
+        f"{settings.RABBITMQ_HOST}/"
+    )
+    connection = await aio_pika.connect_robust(amqp_url)  # соединение с RabbitMQ
     
     async with connection:
         channel = await connection.channel()
