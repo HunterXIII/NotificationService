@@ -33,7 +33,7 @@ async def publish_notification(data: dict):
 
 async def main():
 
-    await publish_notification({"user_id": 4, "title": "Проверка уведомления", "content": 'Проверка как отправляется уведомление', "email": "volkraftroman@gmail.com"})
+    await publish_notification({"user_id": 5, "title": "Смена пароля", "content": 'Был изменён пароль', "email": "volkraftroman@gmail.com"})
 
     print("Message sent")
 

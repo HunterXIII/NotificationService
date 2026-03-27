@@ -1,7 +1,8 @@
 import asyncio
+import os
 import smtplib
 from email.message import EmailMessage
-
+from config import settings
 
 async def send_email(email_to: str, title: str, content: str):
 
@@ -14,7 +15,7 @@ async def send_email(email_to: str, title: str, content: str):
     def send():
         with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
             smtp.starttls()
-            smtp.login("devforge.sirius@gmail.com", "tudd hfto gmot alsk")
+            smtp.login("devforge.sirius@gmail.com", settings.GOOGLE_KEY)
             smtp.sendmail(
                 "devforge.sirius@gmail.com",
                 email_to,
