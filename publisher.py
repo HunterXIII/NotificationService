@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import aio_pika
 
 async def publish_notification(data: dict):
@@ -15,8 +16,13 @@ async def publish_notification(data: dict):
         }
     '''
 
+    amqp_url = (
+        f"amqp://{os.getenv("RABBITMQ_USER")}:"
+        f"{os.getenv("RABBITMQ_PASSWORD")}@"
+        f"{os.getenv("RABBITMQ_HOST")}/"
+    )
     connection = await aio_pika.connect_robust(
-        "amqp://guest:guest@localhost/"
+        amqp_url
     )
 
     async with connection:
