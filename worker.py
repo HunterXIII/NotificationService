@@ -7,24 +7,21 @@ from email_notification import send_email
 from config import settings
 
 async def process_message(message: aio_pika.IncomingMessage):
-    '''
-        Example: 
-        {
-            "user_id": 1,
-            "title": "Создан проект", 
-            "content": 'Проект "TaskManager" успешно создан'
-            
-            "email": "volkraftroman@gmail.com" ?? 
-        }
-    '''
-
-
     async with message.process():
-
-        data = json.loads(message.body)
+        try:
+            data = json.loads(message.body)
+        except (json.JSONDecodeError, TypeError):
+            print(f"!!! Error: Received invalid JSON: {message.body}")
+            return
+        
+        required_fields = ["user_id", "title", "content", "email"]
+        missing = [field for field in required_fields if field not in data]
+        
+        if missing:
+            print(f"!!! Error: Missing fields {missing} in message: {data}")
+            return
 
         db = SessionLocal()
-
         try:
             notification = Notification(
                 user_id=data["user_id"],
@@ -34,21 +31,27 @@ async def process_message(message: aio_pika.IncomingMessage):
 
             db.add(notification)
             db.commit()
+            print(f"Notification saved to DB for user {data['user_id']}")
 
-        except Exception:
+        except Exception as e:
             db.rollback()
-            raise
+            print(f"!!! Database error: {e}")
+            raise 
 
         finally:
             db.close()
 
-        await send_email(
-            data["email"],
-            data["title"],
-            data["content"]
-        )
+        try:
+            await send_email(
+                data["email"],
+                data["title"],
+                data["content"]
+            )
+            print(f"Email sent to: {data['email']}")
+        except Exception as e:
+            print(f"Email sending failed: {e}")
 
-        print("Notification saved:", data)
+        print("Message processed")
 
 
 async def main():
@@ -57,7 +60,8 @@ async def main():
         f"{settings.RABBITMQ_PASSWORD}@"
         f"{settings.RABBITMQ_HOST}/"
     )
-    connection = await aio_pika.connect_robust(amqp_url)  # соединение с RabbitMQ
+    print("Connecting to RabbitMQ: ", amqp_url)
+    connection = await aio_pika.connect_robust(amqp_url) 
     
     async with connection:
         channel = await connection.channel()

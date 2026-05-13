@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
@@ -28,8 +28,8 @@ engine = create_engine(DATABASE_URL, echo=True, pool_pre_ping=True)  # echo=True
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Базовый класс для моделей
-Base = declarative_base()
-
+class Base(DeclarativeBase):
+    pass
 # Зависимость для получения сессии БД в эндпоинтах
 def get_db():
     db = SessionLocal()

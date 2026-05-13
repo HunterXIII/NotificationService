@@ -1,16 +1,90 @@
 services:
-  postgres:
-    image: postgres:15
-    container_name: myapp_db
+  notification-db:
+    image: postgres:15-alpine
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
-    ports:
-      - "5433:5432"
+      POSTGRES_USER: devforge
+      POSTGRES_PASSWORD: devforge
+      POSTGRES_DB: notification_db
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
+      - notification_pg_data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devforge -d notification_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks: [devforge]
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: devforge
+      RABBITMQ_DEFAULT_PASS: devforge
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [devforge]
+
+  notification-service:
+    build: 
+      context: .
+      dockerfile: service.Dockerfile
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: >
+      sh -c "alembic upgrade head &&
+      uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    environment:
+      DB_HOST: notification-db
+      POSTGRES_USER: devforge
+      POSTGRES_PASSWORD: devforge
+      POSTGRES_NAME: notification_db
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: devforge
+      RABBITMQ_PASSWORD: devforge
+      GOOGLE_KEY: ${GOOGLE_KEY:-}
+    ports:
+      - "8005:8000"
+    depends_on:
+      notification-db:
+        condition: service_healthy
+    networks: [devforge]
+
+  notification-worker:
+    build: 
+      context: .
+      dockerfile: worker.Dockerfile
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: >
+      sh -c "alembic upgrade head && python worker.py"
+    environment:
+      DB_HOST: notification-db
+      POSTGRES_USER: devforge
+      POSTGRES_PASSWORD: devforge
+      POSTGRES_NAME: notification_db
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: devforge
+      RABBITMQ_PASSWORD: devforge
+      GOOGLE_KEY: ${GOOGLE_KEY:-}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      notification-db:
+        condition: service_healthy
+    networks: [devforge]
+
+networks:
+  devforge:
+    name: devforge
 
 volumes:
-  postgres_data:
+  notification_pg_data:
