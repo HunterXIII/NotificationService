@@ -4,8 +4,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.database import Base
-from config import settings 
-import worker  # Импортируем сам модуль, чтобы пропатчить его переменную
+from config import settings
+
+import worker  # noqa: F401  # load module so patch("worker.SessionLocal") applies
 
 # 1. Настройка тестовой БД (SQLite в файле)
 TEST_DATABASE_URL = "sqlite:///./test_integration.db"

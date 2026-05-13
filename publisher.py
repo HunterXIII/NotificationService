@@ -17,9 +17,9 @@ async def publish_notification(data: dict):
     '''
 
     amqp_url = (
-        f"amqp://{os.getenv("RABBITMQ_USER")}:"
-        f"{os.getenv("RABBITMQ_PASSWORD")}@"
-        f"{os.getenv("RABBITMQ_HOST")}/"
+        f"amqp://{os.getenv('RABBITMQ_USER')}:"
+        f"{os.getenv('RABBITMQ_PASSWORD')}@"
+        f"{os.getenv('RABBITMQ_HOST')}/"
     )
     connection = await aio_pika.connect_robust(
         amqp_url

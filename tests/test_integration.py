@@ -2,8 +2,7 @@ import asyncio
 import json
 import pytest
 import aio_pika
-from unittest.mock import patch, AsyncMock
-from sqlalchemy import text
+from unittest.mock import AsyncMock, patch
 
 from worker import process_message
 from app.models import Notification

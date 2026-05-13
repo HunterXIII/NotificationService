@@ -1,10 +1,10 @@
-from fastapi import Depends, FastAPI, HTTPException
-from pydantic import BaseModel
-from datetime import datetime
 from typing import List
-from app import schemas, models
-from app.database import SessionLocal, engine, get_db
+
+from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
+
+from app import models, schemas
+from app.database import get_db
 
 app = FastAPI(
     title="Notification Service",
@@ -44,7 +44,7 @@ def GetNotification(notification_id: int, db: Session = Depends(get_db)):
 def GetUnreadNotifications(user_id: int, db: Session = Depends(get_db)):
     notifications = db.query(models.Notification)\
         .filter(models.Notification.user_id == user_id)\
-        .filter(models.Notification.is_read == False)\
+        .filter(models.Notification.is_read.is_(False))\
         .all()
     return notifications
 
@@ -55,7 +55,7 @@ def ReadAllNotifications(user_id: int, db: Session = Depends(get_db)):
     """
     notifications = db.query(models.Notification)\
         .filter(models.Notification.user_id == user_id)\
-        .filter(models.Notification.is_read == False)\
+        .filter(models.Notification.is_read.is_(False))\
         .all()
     for notification in notifications:
         notification.is_read = True

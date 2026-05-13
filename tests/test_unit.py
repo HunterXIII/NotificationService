@@ -26,7 +26,6 @@ async def test_should_not_crash(name, payload):
     cms_mock.__aexit__ = AsyncMock(return_value=None)
     mock_msg.process = MagicMock(return_value=cms_mock)
 
-    with patch("worker.SessionLocal") as mock_db, \
-        patch("worker.send_email", new_callable=AsyncMock):
+    with patch("worker.SessionLocal"), patch("worker.send_email", new_callable=AsyncMock):
         
         await process_message(mock_msg)

@@ -8,7 +8,7 @@ from alembic import context
 sys.path.append(str(Path(__file__).parent.parent))
 from config import settings  # Убедитесь, что путь к файлу верный
 from app.database import Base
-from app.models import Notification
+import app.models  # noqa: F401  # register models on Base.metadata
 
 config = context.config
 
