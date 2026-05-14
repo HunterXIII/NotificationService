@@ -99,21 +99,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set image tags
+      - name: Set image names and tags
         id: tags
+        env:
+          REPOSITORY_LC: ${{ github.repository }}
+          SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          owner_lc=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')
-          sha_short=$(echo '${{ github.sha }}' | cut -c1-7)
-          ref='${{ github.ref }}'
-          if [[ "$ref" == "refs/heads/main" || "$ref" == "refs/heads/master" ]]; then
-            echo "service_tags=ghcr.io/${owner_lc}/notifications-service:latest,ghcr.io/${owner_lc}/notifications-service:sha-${sha_short}" >> "$GITHUB_OUTPUT"
-            echo "worker_tags=ghcr.io/${owner_lc}/notifications-worker:latest,ghcr.io/${owner_lc}/notifications-worker:sha-${sha_short}" >> "$GITHUB_OUTPUT"
-          else
-            git_tag="${ref#refs/tags/}"
-            echo "service_tags=ghcr.io/${owner_lc}/notifications-service:latest,ghcr.io/${owner_lc}/notifications-service:${git_tag}" >> "$GITHUB_OUTPUT"
-            echo "worker_tags=ghcr.io/${owner_lc}/notifications-worker:latest,ghcr.io/${owner_lc}/notifications-worker:${git_tag}" >> "$GITHUB_OUTPUT"
-          fi
+          repo_lc=$(echo "$REPOSITORY_LC" | tr '[:upper:]' '[:lower:]')
+          # ghcr.io/<логин>/<репозиторий>:latest и :<полный_sha>
+          echo "service_tags=ghcr.io/${repo_lc}:latest,ghcr.io/${repo_lc}:${SHA}" >> "$GITHUB_OUTPUT"
+          echo "worker_tags=ghcr.io/${repo_lc}-worker:latest,ghcr.io/${repo_lc}-worker:${SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push service image
         uses: docker/build-push-action@v6
@@ -130,3 +126,13 @@ jobs:
           file: worker.Dockerfile
           push: true
           tags: ${{ steps.tags.outputs.worker_tags }}
+
+  deploy:
+    needs: publish-images
+    if: >-
+      github.event_name == 'push'
+      && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy (stub)
+        run: echo "Deploy"
