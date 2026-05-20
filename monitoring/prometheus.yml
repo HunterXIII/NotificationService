@@ -1,0 +1,18 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: notification-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["notification-service:8000"]
+        labels:
+          service: notification-service
+
+  - job_name: notification-worker
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["notification-worker:9108"]
+        labels:
+          service: notification-worker

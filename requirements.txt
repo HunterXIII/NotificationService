@@ -1,5 +1,8 @@
 fastapi
 uvicorn
+prometheus-client
+prometheus-fastapi-instrumentator
+structlog
 sqlalchemy
 psycopg2-binary
 alembic
