@@ -57,6 +57,32 @@ services:
         condition: service_healthy
     networks: [devforge]
 
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - notification-service
+      - notification-worker
+    networks: [devforge]
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks: [devforge]
+
   notification-worker:
     build: 
       context: .
@@ -75,6 +101,9 @@ services:
       RABBITMQ_USER: devforge
       RABBITMQ_PASSWORD: devforge
       GOOGLE_KEY: ${GOOGLE_KEY:-}
+      WORKER_METRICS_PORT: 9108
+    expose:
+      - "9108"
     depends_on:
       rabbitmq:
         condition: service_healthy
